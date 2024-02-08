@@ -31,8 +31,8 @@
 // ###########################################################################################################################################
 int RTC_I2C_ADDRESS = 0x68;  // I2C adress of the RTC  DS3231 (Chip on ZS-042 Board)
 #define AP_TIMEOUT 240       // Timeout in seconds for AP / WLAN config
-#define PIN D6               // Arduino-Pin connected to the NeoPixels
-#define NUMPIXELS 114        // How many NeoPixels are attached to the Arduino?
+#define PIN D4               // Arduino-Pin connected to the NeoPixels
+#define NUMPIXELS 121        // How many NeoPixels are attached to the Arduino?
 
 
 // ###########################################################################################################################################
@@ -59,11 +59,12 @@ int switchRainBow = 0;    // Show the display in rainbow mode (default color is 
 int switchLEDOrder = 1;   // Show the minute LEDs in the 4 corners in clockwise order if set to 1
 int showDate = 0;         // Show date when minute = 30 ? - Note: Any value <> 0 shows the date when minute = 30
 int blinkTime = 0;        // Flag for blinking hour time name every hour
+int startcorner = 1;      // Startcorner
 int dcwFlag = 0;          // Flag for highlighting DCW every Hour
 int useresturl = 1;       // Use the REST function web server
 int server1port = 55555;  // REST function web server port
 int powersupply = 0;      // Flag for the power supply note text and to raise the limit for the intensity from 128 to 255
-int useRTC = 1;           // Flag to disable the RTC board (No configuration needed. Set automatically after entering and saving the web config once)
+int useRTC = 0;           // Flag to disable the RTC board (No configuration needed. Set automatically after entering and saving the web config once)
 int DEspecial1 = 0;       // DE special function only: Change between "VIERTEL VOR" = "0" and "DREIVIERTEL" = "1"
 
 

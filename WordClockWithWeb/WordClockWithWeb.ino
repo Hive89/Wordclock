@@ -125,6 +125,7 @@ struct parmRec {
   int pDCWFlag;
   int puseRTC;
   int pBlinkTime;
+  int pstartcorner;
   int pPING_IP_ADDR1_O1;
   int pPING_IP_ADDR1_O2;
   int pPING_IP_ADDR1_O3;
@@ -354,6 +355,7 @@ void readEEPROM() {
     switchLangWeb = parameter.pswitchLangWeb;
     switchLEDOrder = parameter.pswitchLEDOrder;
     blinkTime = parameter.pBlinkTime;
+    startcorner = parameter.pstartcorner;
     DEspecial1 = parameter.pDEspecial1;
     dcwFlag = parameter.pDCWFlag;
     useRTC = parameter.puseRTC;
@@ -397,6 +399,7 @@ void writeEEPROM() {
   parameter.pDCWFlag = dcwFlag;
   parameter.puseRTC = useRTC;
   parameter.pBlinkTime = blinkTime;
+  parameter.pstartcorner = startcorner;
   parameter.pDEspecial1 = DEspecial1;
   ntpServer.toCharArray(parameter.pNTPServer, sizeof(parameter.pNTPServer));
   timeZone.toCharArray(parameter.pTimeZone, sizeof(parameter.pTimeZone));
@@ -582,6 +585,13 @@ void checkClient() {
             if (blinkTime)
               client.print(" checked");
             client.print("><br><hr>");
+
+            // Startcorner:
+            // #######
+            client.println("<label for=\"startcorner\">" + txtSC + ": </label><select id=\"startcorner\" name=\"startcorner\" ><option selected=\"selected\">");
+            client.println(startcorner);
+            client.println("</option><option>1</option><option>2</option><option>3</option><option>4</option>");
+            client.print("</select><br><hr>");
 
 
             // Show date value as scrolling text every minute after 30s:
@@ -1120,8 +1130,16 @@ void checkClient() {
                 useNightLEDs = 0;
                 NightModeActive = false;
               }
-
-
+              // Pick up Startcorner:
+              // ############################
+              pos = currentLine.indexOf("&startcorner=");
+              if (pos >= 0) {
+                String maxStr = currentLine.substring(pos + 13);
+                pos = maxStr.indexOf("&");
+                if (pos > 0)
+                  maxStr = maxStr.substring(0, pos);
+                startcorner = maxStr.toInt();
+              }  
               // Pick up Display OFF - Monday:
               // ############################
               pos = currentLine.indexOf("&displayonmaxMO=");
@@ -1723,29 +1741,29 @@ void defaultText() {
   switch (switchLangWeb) {
     case 0:  // DE
       {
-        pixels.setPixelColor(5, pixels.Color(redVal, greenVal, blueVal));   // set on default text
-        pixels.setPixelColor(6, pixels.Color(redVal, greenVal, blueVal));   // set on default text
-        pixels.setPixelColor(7, pixels.Color(redVal, greenVal, blueVal));   // set on default text
-        pixels.setPixelColor(9, pixels.Color(redVal, greenVal, blueVal));   // set on default text
-        pixels.setPixelColor(10, pixels.Color(redVal, greenVal, blueVal));  // set on default text
+        pixels.setPixelColor(ledXY(0,9), pixels.Color(redVal, greenVal, blueVal));   // set on default text
+        pixels.setPixelColor(ledXY(1,9), pixels.Color(redVal, greenVal, blueVal));   // set on default text
+        pixels.setPixelColor(ledXY(3,9), pixels.Color(redVal, greenVal, blueVal));   // set on default text
+        pixels.setPixelColor(ledXY(4,9), pixels.Color(redVal, greenVal, blueVal));   // set on default text
+        pixels.setPixelColor(ledXY(5,9), pixels.Color(redVal, greenVal, blueVal));  // set on default text
         break;
       }
     case 1:  // EN
       {
         // pixels.setPixelColor(5, pixels.Color(redVal, greenVal, blueVal));   // set on default text
-        pixels.setPixelColor(6, pixels.Color(redVal, greenVal, blueVal));   // set on default text
-        pixels.setPixelColor(7, pixels.Color(redVal, greenVal, blueVal));   // set on default text
-        pixels.setPixelColor(9, pixels.Color(redVal, greenVal, blueVal));   // set on default text
-        pixels.setPixelColor(10, pixels.Color(redVal, greenVal, blueVal));  // set on default text
+        pixels.setPixelColor(ledXY(0,9), pixels.Color(redVal, greenVal, blueVal));   // set on default text
+        pixels.setPixelColor(ledXY(1,9), pixels.Color(redVal, greenVal, blueVal));   // set on default text
+        pixels.setPixelColor(ledXY(3,9), pixels.Color(redVal, greenVal, blueVal));   // set on default text
+        pixels.setPixelColor(ledXY(4,9), pixels.Color(redVal, greenVal, blueVal));  // set on default text
         break;
       }
     default:  // DE
       {
-        pixels.setPixelColor(5, pixels.Color(redVal, greenVal, blueVal));   // set on default text
-        pixels.setPixelColor(6, pixels.Color(redVal, greenVal, blueVal));   // set on default text
-        pixels.setPixelColor(7, pixels.Color(redVal, greenVal, blueVal));   // set on default text
-        pixels.setPixelColor(9, pixels.Color(redVal, greenVal, blueVal));   // set on default text
-        pixels.setPixelColor(10, pixels.Color(redVal, greenVal, blueVal));  // set on default text
+        pixels.setPixelColor(ledXY(0,9), pixels.Color(redVal, greenVal, blueVal));   // set on default text
+        pixels.setPixelColor(ledXY(1,9), pixels.Color(redVal, greenVal, blueVal));   // set on default text
+        pixels.setPixelColor(ledXY(3,9), pixels.Color(redVal, greenVal, blueVal));   // set on default text
+        pixels.setPixelColor(ledXY(4,4), pixels.Color(redVal, greenVal, blueVal));   // set on default text
+        pixels.setPixelColor(ledXY(5,4), pixels.Color(redVal, greenVal, blueVal));  // set on default text
         break;
       }
   }
@@ -1758,14 +1776,60 @@ void defaultText() {
 int ledXY(int x, int y) {
   // Test for valid coordinates
   // If outside panel return -1
-  if ((x < 0) || (x > 10) || (y < 0) || (y > 9))
-    return -1;
-  int ledNr = (9 - y) * 11;
-  if ((y % 2) == 0)
-    ledNr = ledNr + x;
-  else
-    ledNr = ledNr + 10 - x;
-  return ledNr;
+  int ledNr = 0;
+  switch (startcorner){    
+    default:    
+      if ((x < 0) || (x > 10) || (y < 0) || (y > 9))
+        return -1;
+      ledNr = (9 - y) * 11;
+      if ((y % 2) == 0)
+        ledNr = ledNr + 10 - x;
+      else
+        ledNr = ledNr + x;
+      return ledNr;
+      break;
+    case 1:    
+      if ((x < 0) || (x > 10) || (y < 0) || (y > 9))
+        return -1;
+      ledNr = (9 - y) * 11;
+      if ((y % 2) == 0)
+        ledNr = ledNr + 10 - x;
+      else
+        ledNr = ledNr + x;
+      return ledNr;
+      break;
+    case 2:
+      if ((x < 0) || (x > 10) || (y < 0) || (y > 9))
+        return -1;
+      ledNr = (9 - y) * 11;
+      if ((y % 2) == 0)
+        ledNr = ledNr + x;
+      else
+        ledNr = ledNr + 10 - x;
+      return ledNr;
+      break;
+    case 3:
+      if ((x < 0) || (x > 10) || (y < 0) || (y > 9))
+        return -1;
+      ledNr = (y) * 11 + 11;
+      if ((y % 2) == 0)
+        ledNr = ledNr + x;
+      else
+        ledNr = ledNr + 10 - x;
+      return ledNr;
+      break;
+    case 4:
+      if ((x < 0) || (x > 10) || (y < 0) || (y > 9))
+        return -1;
+      ledNr = (y) * 11 + 11;
+      if ((y % 2) == 0)
+        ledNr = ledNr + 10 - x;
+      else
+        ledNr = ledNr + x;
+      return ledNr;
+      break;    
+       
+  }
 }
 
 
@@ -1890,10 +1954,10 @@ void showMinutes(int minutes) {
     int ledNr = 0;
     if (switchLEDOrder) {  // clockwise
       switch (i) {
-        case 1: ledNr = 110; break;
-        case 2: ledNr = 111; break;
-        case 3: ledNr = 112; break;
-        case 4: ledNr = 113; break;
+        case 1: ledNr = 112; break;
+        case 2: ledNr = 114; break;
+        case 3: ledNr = 116; break;
+        case 4: ledNr = 118; break;
       }
     } else {  // anti clockwise
       switch (i) {
@@ -1955,27 +2019,27 @@ void showCurrentTime() {
     case 0:  // DE
       {
         // Fuenf: (Minuten)
-        setLED(0, 3, ((minDiv == 1) || (minDiv == 5) || (minDiv == 7) || (minDiv == 11)));
+        setLED(ledXY(7,9), ledXY(10,9), ((minDiv == 1) || (minDiv == 5) || (minDiv == 7) || (minDiv == 11)));
         // Viertel:
-        if (DEspecial1 == 0) setLED(22, 28, ((minDiv == 3) || (minDiv == 9)));
-        if (DEspecial1 == 1) setLED(22, 28, ((minDiv == 3)));
+        if (DEspecial1 == 0) setLED(ledXY(4,7), ledXY(10,7), ((minDiv == 3) || (minDiv == 9)));
+        if (DEspecial1 == 1) setLED(ledXY(4,7), ledXY(10,7), ((minDiv == 3)));
         // DREIVIERTEL:
-        if (DEspecial1 == 1) setLED(22, 32, ((minDiv == 9)));
+        if (DEspecial1 == 1) setLED(ledXY(0,7), ledXY(10,7), ((minDiv == 9)));
         // Zehn: (Minuten)
-        setLED(11, 14, ((minDiv == 2) || (minDiv == 10)));
+        setLED(ledXY(0,8), ledXY(3,8), ((minDiv == 2) || (minDiv == 10)));
         // Zwanzig:
-        setLED(15, 21, ((minDiv == 4) || (minDiv == 8)));
+        setLED(ledXY(4,8), ledXY(10,8), ((minDiv == 4) || (minDiv == 8)));
         // Nach:
-        if (DEspecial1 == 0) setLED(40, 43, ((minDiv == 1) || (minDiv == 2) || (minDiv == 3) || (minDiv == 4) || (minDiv == 7)));
+        if (DEspecial1 == 0) setLED(ledXY(7,6), ledXY(10,6), ((minDiv == 1) || (minDiv == 2) || (minDiv == 3) || (minDiv == 4) || (minDiv == 7)));
         if (DEspecial1 == 1) {
-          setLED(40, 43, ((minDiv == 1) || (minDiv == 2) || (minDiv == 4) || (minDiv == 7)));
+          setLED(ledXY(7,6), ledXY(10,6), ((minDiv == 1) || (minDiv == 2) || (minDiv == 4) || (minDiv == 7)));
           if (minDiv == 3) iHour = iHour + 1;
         }
         // Vor:
-        if (DEspecial1 == 0) setLED(33, 35, ((minDiv == 5) || (minDiv == 8) || (minDiv == 9) || (minDiv == 10) || (minDiv == 11)));
-        if (DEspecial1 == 1) setLED(33, 35, ((minDiv == 5) || (minDiv == 8) || (minDiv == 10) || (minDiv == 11)));
+        if (DEspecial1 == 0) setLED(ledXY(0,6), ledXY(2,6), ((minDiv == 5) || (minDiv == 8) || (minDiv == 9) || (minDiv == 10) || (minDiv == 11)));
+        if (DEspecial1 == 1) setLED(ledXY(0,6), ledXY(2,6), ((minDiv == 5) || (minDiv == 8) || (minDiv == 10) || (minDiv == 11)));
         // Halb:
-        setLED(51, 54, ((minDiv == 5) || (minDiv == 6) || (minDiv == 7)));
+        setLED(ledXY(0,5), ledXY(3,5), ((minDiv == 5) || (minDiv == 6) || (minDiv == 7)));
         // Eck-LEDs: 1 pro Minute
         showMinutes(iMinute);
 
@@ -1993,53 +2057,53 @@ void showCurrentTime() {
         }
 
         // Uhr:
-        setLED(107, 109, (iMinute < 5));
+        setLED(ledXY(8,0), ledXY(10,0), (iMinute < 5));
         // Ein:
-        setLEDHour(55, 57, (xHour == 1));
+        setLEDHour(ledXY(0,4), ledXY(3,4), (xHour == 1));
         // EinS: (S in EINS) (just used if not point 1 o'clock)
-        setLEDHour(58, 58, ((xHour == 1) && (iMinute > 4)));
+        setLEDHour(ledXY(0,4), ledXY(4,4), ((xHour == 1) && (iMinute > 4)));
         // Zwei:
-        setLEDHour(62, 65, (xHour == 2));
+        setLEDHour(ledXY(7,4), ledXY(10,4), (xHour == 2));
         // Drei:
-        setLEDHour(73, 76, (xHour == 3));
+        setLEDHour(ledXY(0,3), ledXY(3,3), (xHour == 3));
         // Vier:
-        setLEDHour(66, 69, (xHour == 4));
+        setLEDHour(ledXY(7,3), ledXY(10,3), (xHour == 4));
         // Fuenf:
-        setLEDHour(44, 47, (xHour == 5));
+        setLEDHour(ledXY(7,5), ledXY(10,5), (xHour == 5));
         // Sechs:
-        setLEDHour(77, 81, (xHour == 6));
+        setLEDHour(ledXY(0,2), ledXY(4,2), (xHour == 6));
         // Sieben:
-        setLEDHour(93, 98, (xHour == 7));
+        setLEDHour(ledXY(0,1), ledXY(5,1), (xHour == 7));
         // Acht:
-        setLEDHour(84, 87, (xHour == 8));
+        setLEDHour(ledXY(7,2), ledXY(10,2), (xHour == 8));
         // Neun:
-        setLEDHour(102, 105, (xHour == 9));
+        setLEDHour(ledXY(3,0), ledXY(6,0), (xHour == 9));
         // Zehn: (Stunden)
-        setLEDHour(99, 102, (xHour == 10));
+        setLEDHour(ledXY(0,0), ledXY(3,0), (xHour == 10));
         // Elf:
-        setLEDHour(47, 49, (xHour == 11));
+        setLEDHour(ledXY(5,5), ledXY(7,5), (xHour == 11));
         // Zwoelf:
-        setLEDHour(88, 92, (xHour == 12));
+        setLEDHour(ledXY(6,1), ledXY(10,1), (xHour == 12));
         break;
       }
     case 1:  // EN
       {
         // FIVE: (Minutes)            // x:05 + x:25 + x:35 + x:55
-        setLED(23, 26, ((minDiv == 1) || (minDiv == 5) || (minDiv == 7) || (minDiv == 11)));
+        setLED(ledXY(6,7), ledXY(9,7), ((minDiv == 1) || (minDiv == 5) || (minDiv == 7) || (minDiv == 11)));
         // QUARTER:                   // x:15 + X:45
-        setLED(13, 19, ((minDiv == 3) || (minDiv == 9)));
+        setLED(ledXY(2,8), ledXY(8,8), ((minDiv == 3) || (minDiv == 9)));
         // TEN: (Minutes)             // x:10 + x:50
-        setLED(38, 40, ((minDiv == 2) || (minDiv == 10)));
+        setLED(ledXY(5,6), ledXY(7,6), ((minDiv == 2) || (minDiv == 10)));
         // TWENTY:                    // x:20 + x:25 + x:35 + x:40
-        setLED(27, 32, ((minDiv == 4) || (minDiv == 5) || (minDiv == 7) || (minDiv == 8)));
+        setLED(ledXY(0,7), ledXY(5,7), ((minDiv == 4) || (minDiv == 5) || (minDiv == 7) || (minDiv == 8)));
         // PAST:                      // x:05 + x:10 + x:15 + x:20 + x:25 + x:30
-        setLED(51, 54, ((minDiv == 1) || (minDiv == 2) || (minDiv == 3) || (minDiv == 4) || (minDiv == 5) || (minDiv == 6)));
+        setLED(ledXY(0,5), ledXY(3,5), ((minDiv == 1) || (minDiv == 2) || (minDiv == 3) || (minDiv == 4) || (minDiv == 5) || (minDiv == 6)));
         // TO:                        // x:35 + x:40 + x:45 + x:50 + x:55
-        setLED(42, 43, ((minDiv == 7) || (minDiv == 8) || (minDiv == 9) || (minDiv == 10) || (minDiv == 11)));
+        setLED(ledXY(9,6), ledXY(10,6), ((minDiv == 7) || (minDiv == 8) || (minDiv == 9) || (minDiv == 10) || (minDiv == 11)));
         // HALF:                      // x:30
-        setLED(33, 36, ((minDiv == 6)));
+        setLED(ledXY(0,6), ledXY(3,6), ((minDiv == 6)));
         // A:                         // x:15 + X:45
-        setLED(3, 3, ((minDiv == 3) || (minDiv == 9)));
+        setLED(ledXY(7,9), ledXY(7,9), ((minDiv == 3) || (minDiv == 9)));
 
         // CORNER-LEDs: 1 per minute
         showMinutes(iMinute);
@@ -2057,31 +2121,31 @@ void showCurrentTime() {
         }
 
         // O'CLOCK:
-        setLED(104, 109, (iMinute < 5));
+        setLED(ledXY(5,0), ledXY(10,0), (iMinute < 5));
         // ONE:
-        setLEDHour(55, 57, (xHour == 1));
+        setLEDHour(ledXY(0,4), ledXY(2,4), (xHour == 1));
         // TWO:
-        setLEDHour(66, 68, (xHour == 2));
+        setLEDHour(ledXY(8,3), ledXY(10,3), (xHour == 2));
         // THREE:
-        setLEDHour(61, 65, (xHour == 3));
+        setLEDHour(ledXY(6,4), ledXY(10,4), (xHour == 3));
         // FOUR:
-        setLEDHour(73, 76, (xHour == 4));
+        setLEDHour(ledXY(0,3), ledXY(3,3), (xHour == 4));
         // FIVE:
-        setLEDHour(69, 72, (xHour == 5));
+        setLEDHour(ledXY(4,3), ledXY(7,3), (xHour == 5));
         // SIX:
-        setLEDHour(58, 60, (xHour == 6));
+        setLEDHour(ledXY(3,4), ledXY(5,4), (xHour == 6));
         // SEVEN:
-        setLEDHour(94, 98, (xHour == 7));
+        setLEDHour(ledXY(0,1), ledXY(4,1), (xHour == 7));
         // EIGHT:
-        setLEDHour(77, 81, (xHour == 8));
+        setLEDHour(ledXY(0,2), ledXY(4,2), (xHour == 8));
         // NINE:
-        setLEDHour(44, 47, (xHour == 9));
+        setLEDHour(ledXY(7,5), ledXY(10,5), (xHour == 9));
         // TEN: (Hour)
-        setLEDHour(99, 101, (xHour == 10));
+        setLEDHour(ledXY(0,0), ledXY(2,0), (xHour == 10));
         // ELEVEN:
-        setLEDHour(82, 87, (xHour == 11));
+        setLEDHour(ledXY(5,2), ledXY(10,2), (xHour == 11));
         // TWELVE:
-        setLEDHour(88, 93, (xHour == 12));
+        setLEDHour(ledXY(5,1), ledXY(10,1), (xHour == 12));
         break;
       }
   }
@@ -2396,30 +2460,30 @@ void SetWLAN() {
       case 0:
         {  // DE:
           Serial.println("Show SET WLAN...");
-          setLED(6, 6, 1);      // S
-          setLED(12, 12, 1);    // E
-          setLED(24, 24, 1);    // T
-          setLED(63, 63, 1);    // W
-          setLED(83, 83, 1);    // L
-          setLED(84, 84, 1);    // A
-          setLED(93, 93, 1);    // N
-          setLED(110, 110, 1);  // Corner 1
-          setLED(111, 111, 1);  // Corner 2
-          setLED(112, 112, 1);  // Corner 3
-          setLED(113, 113, 1);  // Corner 4
+          setLED(ledXY(1,9), ledXY(1,9), 1);      // S
+          setLED(ledXY(1,8), ledXY(1,8), 1);    // E
+          setLED(ledXY(8,7), ledXY(8,7), 1);    // T
+          setLED(ledXY(8,4), ledXY(8,4), 1);    // W
+          setLED(ledXY(6,2), ledXY(6,2), 1);    // L
+          setLED(ledXY(7,2), ledXY(7,2), 1);    // A
+          setLED(ledXY(5,1), ledXY(5,1), 1);    // N
+          setLED(112, 112, 1);  // Corner 1
+          setLED(114, 114, 1);  // Corner 2
+          setLED(116, 116, 1);  // Corner 3
+          setLED(118, 118, 1);  // Corner 4
           break;
         }
       case 1:
         {  // EN:
           Serial.println("Show WIFI...");
-          setLED(31, 31, 1);    // W
-          setLED(25, 25, 1);    // I
-          setLED(76, 76, 1);    // F
-          setLED(71, 71, 1);    // I
-          setLED(110, 110, 1);  // Corner 1
-          setLED(111, 111, 1);  // Corner 2
-          setLED(112, 112, 1);  // Corner 3
-          setLED(113, 113, 1);  // Corner 4
+          setLED(ledXY(5,8), ledXY(5,8), 1);    // W
+          setLED(ledXY(5,7), ledXY(5,7), 1);    // I
+          setLED(ledXY(3,6), ledXY(3,6), 1);    // F
+          setLED(ledXY(1,4), ledXY(1,4), 1);    // I
+          setLED(ledXY(2,0), ledXY(2,0), 1);  // Corner 1
+          setLED(ledXY(4,0), ledXY(4,0), 1);  // Corner 2
+          setLED(ledXY(6,0), ledXY(6,0), 1);  // Corner 3
+          setLED(ledXY(8,0), ledXY(8,0), 1);  // Corner 4
           break;
         }
     }
@@ -2440,19 +2504,18 @@ void ClockRestart() {
   switch (switchLangWeb) {
     case 0:  // DE:
       {
-        setLED(30, 31, 1);  // RE
-        setLED(58, 58, 1);  // S
-        setLED(64, 64, 1);  // E
-        setLED(87, 87, 1);  // T
+        setLED(ledXY(1,7), ledXY(2,7), 1);  // RE
+        setLED(ledXY(3,4), ledXY(3,4), 1);  // S
+        setLED(ledXY(9,4), ledXY(9,4), 1);  // E
+        setLED(ledXY(10,2), ledXY(10,2), 1);  // T
         break;
       }
     case 1:  // EN:
       {
-        setLED(16, 16, 1);  // R
-        setLED(30, 30, 1);  // E
-        setLED(37, 37, 1);  // S
-        setLED(39, 39, 1);  // E
-        setLED(42, 42, 1);  // T
+        setLED(ledXY(1,7), ledXY(2,7), 1);  // RE
+        setLED(ledXY(3,4), ledXY(3,4), 1);  // S
+        setLED(ledXY(9,4), ledXY(9,4), 1);  // E
+        setLED(ledXY(10,2), ledXY(10,2), 1);  // T
         break;
       }
   }
@@ -2478,30 +2541,30 @@ void ClockWifiReset() {
     case 0:
       {  // DE:
         Serial.println("Show SET WLAN...");
-        setLED(6, 6, 1);      // S
-        setLED(12, 12, 1);    // E
-        setLED(24, 24, 1);    // T
-        setLED(63, 63, 1);    // W
-        setLED(83, 83, 1);    // L
-        setLED(84, 84, 1);    // A
-        setLED(93, 93, 1);    // N
-        setLED(110, 110, 1);  // Corner 1
-        setLED(111, 111, 1);  // Corner 2
-        setLED(112, 112, 1);  // Corner 3
-        setLED(113, 113, 1);  // Corner 4
+        setLED(ledXY(1,9), ledXY(1,9), 1);      // S
+        setLED(ledXY(1,8), ledXY(1,8), 1);    // E
+        setLED(ledXY(8,7), ledXY(8,7), 1);    // T
+        setLED(ledXY(6,4), ledXY(6,4), 1);    // W
+        setLED(ledXY(6,2), ledXY(6,2), 1);    // L
+        setLED(ledXY(7,2), ledXY(7,2), 1);    // A
+        setLED(ledXY(5,1), ledXY(5,1), 1);    // N
+        setLED(ledXY(2,0), ledXY(2,0), 1);  // Corner 1
+        setLED(ledXY(4,0), ledXY(4,0), 1);  // Corner 2
+        setLED(ledXY(6,0), ledXY(6,0), 1);  // Corner 3
+        setLED(ledXY(8,0), ledXY(8,0), 1);  // Corner 4
         break;
       }
     case 1:
       {  // EN:
         Serial.println("Show WIFI...");
-        setLED(31, 31, 1);    // W
-        setLED(25, 25, 1);    // I
-        setLED(76, 76, 1);    // F
-        setLED(71, 71, 1);    // I
-        setLED(110, 110, 1);  // Corner 1
-        setLED(111, 111, 1);  // Corner 2
-        setLED(112, 112, 1);  // Corner 3
-        setLED(113, 113, 1);  // Corner 4
+        setLED(ledXY(5,8), ledXY(5,8), 1);    // W
+        setLED(ledXY(5,7), ledXY(5,7), 1);    // I
+        setLED(ledXY(3,6), ledXY(3,6), 1);    // F
+        setLED(ledXY(1,4), ledXY(1,4), 1);    // I
+        setLED(ledXY(2,0), ledXY(2,0), 1);  // Corner 1
+        setLED(ledXY(4,0), ledXY(4,0), 1);  // Corner 2
+        setLED(ledXY(6,0), ledXY(6,0), 1);  // Corner 3
+        setLED(ledXY(8,0), ledXY(8,0), 1);  // Corner 4
         break;
       }
       pixels.show();
@@ -2775,24 +2838,24 @@ void update_started() {  // Callback update start function
   greenVal = 255;
   blueVal = 255;
   // Arrow borders:
-  setLED(3, 7, 1);
-  setLED(14, 14, 1);
-  setLED(18, 18, 1);
-  setLED(29, 29, 1);
-  setLED(25, 25, 1);
-  setLED(36, 36, 1);
-  setLED(40, 40, 1);
-  setLED(51, 51, 1);
-  setLED(47, 47, 1);
-  setLED(56, 58, 1);
-  setLED(62, 64, 1);
-  setLED(68, 68, 1);
-  setLED(74, 74, 1);
-  setLED(80, 80, 1);
-  setLED(84, 84, 1);
-  setLED(94, 94, 1);
-  setLED(92, 92, 1);
-  setLED(104, 104, 1);
+  setLED(ledXY(3,9), ledXY(7,9), 1);
+  setLED(ledXY(3,8), ledXY(3,8), 1);
+  setLED(ledXY(7,8), ledXY(7,8), 1);
+  setLED(ledXY(3,7), ledXY(3,7), 1);
+  setLED(ledXY(7,7), ledXY(7,7), 1);
+  setLED(ledXY(3,6), ledXY(3,6), 1);
+  setLED(ledXY(7,6), ledXY(7,6), 1);
+  setLED(ledXY(3,5), ledXY(3,5), 1);
+  setLED(ledXY(7,5), ledXY(7,5), 1);
+  setLED(ledXY(1,4), ledXY(3,4), 1);
+  setLED(ledXY(7,4), ledXY(9,4), 1);
+  setLED(ledXY(2,3), ledXY(2,3), 1);
+  setLED(ledXY(8,3), ledXY(8,3), 1);
+  setLED(ledXY(3,2), ledXY(3,2), 1);
+  setLED(ledXY(7,2), ledXY(7,2), 1);
+  setLED(ledXY(6,1), ledXY(6,1), 1);
+  setLED(ledXY(4,1), ledXY(4,1), 1);
+  setLED(ledXY(5,0), ledXY(5,0), 1);
   pixels.show();
   delay(1500);
 }
@@ -2815,19 +2878,19 @@ void update_finished() {  // Callback update success finish function
   switch (switchLangWeb) {
     case 0:  // DE:
       {
-        setLED(30, 31, 1);  // RE
-        setLED(58, 58, 1);  // S
-        setLED(64, 64, 1);  // E
-        setLED(87, 87, 1);  // T
+        setLED(ledXY(1,7), ledXY(2,7), 1);  // RE
+        setLED(ledXY(3,4), ledXY(3,4), 1);  // S
+        setLED(ledXY(9,4), ledXY(9,4), 1);  // E
+        setLED(ledXY(10,2), ledXY(10,2), 1);  // T
         break;
       }
     case 1:  // EN:
       {
-        setLED(16, 16, 1);  // R
-        setLED(30, 30, 1);  // E
-        setLED(37, 37, 1);  // S
-        setLED(39, 39, 1);  // E
-        setLED(42, 42, 1);  // T
+        setLED(ledXY(8,8), ledXY(8,8), 1);  // R
+        setLED(ledXY(2,7), ledXY(2,7), 1);  // E
+        setLED(ledXY(4,6), ledXY(4,6), 1);  // S
+        setLED(ledXY(6,6), ledXY(6,6), 1);  // E
+        setLED(ledXY(8,6), ledXY(8,6), 1);  // T
         break;
       }
   }
@@ -2856,19 +2919,19 @@ void update_error(int err) {  // Callback update error finish function
   switch (switchLangWeb) {
     case 0:  // DE:
       {
-        setLED(30, 31, 1);  // RE
-        setLED(58, 58, 1);  // S
-        setLED(64, 64, 1);  // E
-        setLED(87, 87, 1);  // T
+        setLED(ledXY(1,7), ledXY(2,7), 1);  // RE
+        setLED(ledXY(3,4), ledXY(3,4), 1);  // S
+        setLED(ledXY(9,4), ledXY(9,4), 1);  // E
+        setLED(ledXY(10,2), ledXY(10,2), 1);  // T
         break;
       }
     case 1:  // EN:
       {
-        setLED(16, 16, 1);  // R
-        setLED(30, 30, 1);  // E
-        setLED(37, 37, 1);  // S
-        setLED(39, 39, 1);  // E
-        setLED(42, 42, 1);  // T
+        setLED(ledXY(8,8), ledXY(8,8), 1);  // R
+        setLED(ledXY(2,7), ledXY(2,7), 1);  // E
+        setLED(ledXY(4,6), ledXY(4,6), 1);  // S
+        setLED(ledXY(6,6), ledXY(6,6), 1);  // E
+        setLED(ledXY(8,6), ledXY(8,6), 1);  // T
         break;
       }
   }
@@ -2883,38 +2946,37 @@ void update_msg_LEDs(int redCol, int greenCol, int blueCol) {
   redVal = redCol;
   greenVal = greenCol;
   blueVal = blueCol;
-  setLED(1, 2, 1);  // 1 (Arrow)
-  setLED(4, 6, 1);
-  setLED(8, 8, 1);
-  setLED(10, 10, 1);
-  setLED(21, 21, 1);  // 2
-  setLED(19, 19, 1);
-  setLED(17, 17, 1);
-  setLED(15, 15, 1);
-  setLED(13, 13, 1);
-  setLED(11, 11, 1);
-  setLED(22, 22, 1);  // 3
-  setLED(24, 24, 1);
-  setLED(26, 28, 1);
-  setLED(30, 30, 1);
-  setLED(32, 32, 1);
-  setLED(33, 35, 1);  // 4
-  setLED(37, 37, 1);
-  setLED(41, 42, 1);
-  setLED(72, 74, 1);  // O (7-10)
-  setLED(81, 81, 1);
-  setLED(94, 94, 1);
-  setLED(79, 79, 1);
-  setLED(96, 96, 1);
-  setLED(101, 103, 1);
-  setLED(70, 70, 1);  // K (7-10)
-  setLED(83, 83, 1);
-  setLED(92, 92, 1);
-  setLED(105, 105, 1);
-  setLED(68, 68, 1);
-  setLED(84, 84, 1);
-  setLED(91, 91, 1);
-  setLED(107, 107, 1);
+  setLED(ledXY(8,9), ledXY(9,9), 1);  // 1 (Arrow)
+  setLED(ledXY(4,9), ledXY(6,9), 1);
+  setLED(ledXY(2,9), ledXY(2,9), 1);
+  setLED(ledXY(0,9), ledXY(0,9), 1);
+  setLED(ledXY(10,8), ledXY(10,8), 1);  // 2
+  setLED(ledXY(8,8), ledXY(8,8), 1);
+  setLED(ledXY(6,8), ledXY(6,8), 1);
+  setLED(ledXY(4,8), ledXY(4,8), 1);
+  setLED(ledXY(2,8), ledXY(2,8), 1);
+  setLED(ledXY(0,8), ledXY(0,8), 1);
+  setLED(ledXY(0,7), ledXY(0,7), 1);  // 3
+  setLED(ledXY(2,7), ledXY(2,7), 1);
+  setLED(ledXY(4,7), ledXY(6,7), 1);
+  setLED(ledXY(8,7), ledXY(8,7), 1);
+  setLED(ledXY(10,7), ledXY(10,7), 1);
+  setLED(ledXY(0,6), ledXY(2,6), 1);  // 4
+  setLED(ledXY(4,6), ledXY(4,6), 1);
+  setLED(ledXY(8,6), ledXY(9,6), 1);
+  setLED(ledXY(2,3), ledXY(2,3), 1);  // O (7-10)
+  setLED(ledXY(4,3), ledXY(4,3), 1);
+  setLED(ledXY(6,3), ledXY(6,3), 1);
+  setLED(ledXY(8,3), ledXY(8,3), 1);
+  setLED(ledXY(2,2), ledXY(2,2), 1);
+  setLED(ledXY(4,2), ledXY(4,2), 1);
+  setLED(ledXY(6,2), ledXY(7,2), 1);  // K (7-10)
+  setLED(ledXY(2,1), ledXY(2,1), 1);
+  setLED(ledXY(4,1), ledXY(4,1), 1);
+  setLED(ledXY(6,1), ledXY(7,1), 1);
+  setLED(ledXY(2,0), ledXY(4,0), 1);
+  setLED(ledXY(6,0), ledXY(6,0), 1);
+  setLED(ledXY(8,0), ledXY(8,0), 1);
   pixels.show();
 }
 
@@ -2927,34 +2989,34 @@ void update_progress(int cur, int total) {  // Callback update download progress
   greenVal = 255;
   blueVal = 0;
   if (percent >= 10) {
-    setLED(3, 7, 1);
+    setLED(ledXY(3,9), ledXY(7,9), 1);
   }
   if (percent >= 20) {
-    setLED(14, 18, 1);
+    setLED(ledXY(3,8), ledXY(7,8), 1);
   }
   if (percent >= 30) {
-    setLED(25, 29, 1);
+    setLED(ledXY(3,7), ledXY(7,7), 1);
   }
   if (percent >= 40) {
-    setLED(36, 40, 1);
+    setLED(ledXY(3,6), ledXY(7,6), 1);
   }
   if (percent >= 50) {
-    setLED(47, 51, 1);
+    setLED(ledXY(3,5), ledXY(7,5), 1);
   }
   if (percent >= 60) {
-    setLED(56, 64, 1);
+    setLED(ledXY(3,4), ledXY(7,4), 1);
   }
   if (percent >= 70) {
-    setLED(68, 74, 1);
+    setLED(ledXY(3,3), ledXY(7,3), 1);
   }
   if (percent >= 80) {
-    setLED(80, 84, 1);
+    setLED(ledXY(3,2), ledXY(7,2), 1);
   }
   if (percent >= 90) {
-    setLED(92, 94, 1);
+    setLED(ledXY(3,1), ledXY(7,1), 1);
   }
   if (percent >= 99) {
-    setLED(104, 104, 1);
+    setLED(ledXY(3,0), ledXY(7,0), 1);
   }
   if (percent == 100) {
     delay(1500);

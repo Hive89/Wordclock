@@ -32,7 +32,7 @@ String WordClockName, languageSelect, languageInt0, languageInt1, txtSaveSetting
 // LED settings:
 String txtSettings, txtLEDsettings, txtLEDcolor, txtIntensityDay, txtIntensityNight, txtPowerSupplyNote1, txtPowerSupplyNote2, txtPowerSupplyNote3, txtPowerSupplyNote4;
 String txtFlashFullHour1, txtFlashFullHour2, txtShowDate1, txtShowDate2, txtNightMode1, txtNightMode2, txtNightMode3, txtNightModeOff, txtNightModeTo, txtNightModeClock;
-String txtMO, txtTU, txtWE, txtTH, txtFR, txtSA, txtSU;
+String txtMO, txtTU, txtWE, txtTH, txtFR, txtSA, txtSU, txtSC;
 // Content and startup:
 String txtContentStartup, txtUseLEDtest, txtUSEsetWLAN, txtShowIP, txtRainbow1, txtRainbow2, txtRainbow3, txtRainbow4, txtMinDir1, txtMinDir2, txtMinDir3;
 // PING monitor IP-adresses:
@@ -95,6 +95,7 @@ void setLanguage(int lang) {
     txtFR = "Freitag";
     txtSA = "Samstag";
     txtSU = "Sonntag";
+    txtSC = "Startecke";
 
     // Anzeigen und Startverhalten:
     txtContentStartup = "Anzeigen und Startverhalten";
@@ -205,6 +206,7 @@ void setLanguage(int lang) {
     txtFR = "Friday";
     txtSA = "Saturday";
     txtSU = "Sunday";
+    txtSC = "Startcorner";
 
     // Content and startup:
     txtContentStartup = "Content and startup";
